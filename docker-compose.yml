@@ -1,0 +1,47 @@
+services:
+  app:
+    image: kooldev/php:8.2-nginx
+    ports:
+      - "8000:80"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - food_ordering_system
+
+  database:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    container_name: food_ordering_system_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "food_ordering_system_db"
+      MYSQL_ROOT_PASSWORD: "fos-rootpass"
+      MYSQL_PASSWORD: "fos-password"
+      MYSQL_USER: "fos-user"
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - database:/var/lib/mysql:delegated
+    networks:
+      - food_ordering_system
+
+  cache:
+    image: redis:6-alpine
+    volumes:
+      - cache:/data:delegated
+    networks:
+      - food_ordering_system
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+
+networks:
+  food_ordering_system:
+    driver: bridge
+
+volumes:
+  database:
+  cache:
